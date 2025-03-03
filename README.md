@@ -12,3 +12,5 @@ python createsearchablepdf.py input.pdf output.pdf
 
 ## その他
 YomiTokuを利用してOCRを行っているため、GPUを利用できる環境がベストだが、意外とCPUでも動作する。
+## Auther
+[https://glass-lab.net](https://glass-lab.net)
