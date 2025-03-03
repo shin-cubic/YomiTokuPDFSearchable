@@ -1,0 +1,2 @@
+# YomiTokuPDFSearchable
+YomiTokuを利用してPDFを検索可能にします
