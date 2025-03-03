@@ -1,5 +1,6 @@
 # YomiTokuPDFSearchable
 YomiTokuを利用してPDFを検索可能にします
+YomiTokuについては[こちら](https://github.com/kotaro-kinoshita/yomitoku)
 
 ## 使い方
 [https://moji.or.jp/ipafont/ipaex00401/](https://moji.or.jp/ipafont/ipaex00401/)からIPAex明朝とIPAexゴシックのフォントファイル（TTFファイル）の両方がまとめて入ったZIPファイルをダウンロード、解凍し、同一フォルダ内に入れてください
