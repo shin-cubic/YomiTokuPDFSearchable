@@ -122,6 +122,6 @@ if __name__ == "__main__":
     try:
         pdf_to_searchable(input_pdf, output_pdf)
     except Exception as e:
-        print(f"Error: {e}")f, output_pdf)
+        print(f"Error: {e}")
     except Exception as e:
         print(f"Error: {e}")
