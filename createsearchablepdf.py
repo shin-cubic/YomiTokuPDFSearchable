@@ -6,11 +6,12 @@ import shutil
 from yomitoku import OCR
 from yomitoku.data.functions import load_pdf
 from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate
 from PIL import Image
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# 日本語対応フォント（IPAexMincho）の登録（ipaexm.ttf が必要）
+# 日本語対応フォント（IPAexMincho）の登録
 pdfmetrics.registerFont(TTFont('IPAexMincho', 'ipaexm.ttf'))
 
 def results_to_dict(results):
@@ -27,30 +28,6 @@ def results_to_dict(results):
             "direction": word.direction,
         })
     return data
-
-def json_to_hocr(json_data, page_num):
-    hocr = [
-        '<!DOCTYPE html>', '<html>', '<head>', '<meta charset="UTF-8">',
-        f'<title>hOCR output - Page {page_num}</title>', '</head>', '<body>',
-        f'<div class="ocr_page" id="page_{page_num}">'
-    ]
-    for i, word in enumerate(json_data.get('words', [])):
-        content = word.get('content', '')
-        points = word.get('points', [])
-        if len(points) < 3:
-            continue  # 座標情報が不足している場合はスキップ
-        x_min = min(p[0] for p in points)
-        y_min = min(p[1] for p in points)
-        x_max = max(p[0] for p in points)
-        y_max = max(p[1] for p in points)
-        bbox = f"bbox {x_min} {y_min} {x_max} {y_max}"
-        hocr.append(
-            f'<span class="ocrx_word" id="word_{i+1}" title="{bbox}; x_wconf {int(word.get("rec_score", 0) * 100)}">{content}</span>'
-        )
-    hocr.append('</div>')
-    hocr.append('</body>')
-    hocr.append('</html>')
-    return '\n'.join(hocr)
 
 def draw_invisible_text(c, text, x, y, font_size):
     c.saveState()
@@ -71,7 +48,6 @@ def pdf_to_searchable(pdf_path, output_pdf):
     
     temp_img_files = []
     json_files = []
-    hocr_files = []
     
     for i, img in enumerate(imgs):
         try:
@@ -79,30 +55,26 @@ def pdf_to_searchable(pdf_path, output_pdf):
             if not results:
                 raise ValueError(f"OCR failed to process page {i}.")
             
-            json_path = os.path.join(output_dir, f"output_{i}.json")
             json_data = results_to_dict(results)
+            if not json_data.get("words"):
+                raise ValueError(f"JSON file for page {i} contains no valid words.")
+            
+            json_path = os.path.join(output_dir, f"output_{i}.json")
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=2)
-            
-            if os.path.getsize(json_path) == 0:
-                raise ValueError(f"JSON file {json_path} is empty after writing.")
             json_files.append(json_path)
             
             img_path = os.path.join(output_dir, f"output_page_{i}.jpg")
             cv2.imwrite(img_path, img)
             temp_img_files.append(img_path)
-            
-            hocr_output = json_to_hocr(json_data, i + 1)
-            hocr_path = os.path.join(output_dir, f"output_{i}.hocr")
-            with open(hocr_path, "w", encoding="utf-8") as f:
-                f.write(hocr_output)
-            hocr_files.append(hocr_path)
         
         except Exception as e:
             print(f"Error processing page {i}: {e}")
             continue  # エラーがあったページはスキップ
     
+    doc = SimpleDocTemplate(output_pdf)
     c = canvas.Canvas(output_pdf)
+    
     for i, img_path in enumerate(temp_img_files):
         pil_img = Image.open(img_path)
         width, height = pil_img.size
@@ -124,13 +96,13 @@ def pdf_to_searchable(pdf_path, output_pdf):
             y_max = max(p[1] for p in points)
             pdf_x = x_min
             pdf_y = height - y_max
-            font_size = max(y_max - y_min, 10)
+            font_size = min(max(y_max - y_min, 6), 32)  # さらに20%小さく調整
             draw_invisible_text(c, content, pdf_x, pdf_y, font_size)
         c.showPage()
     c.save()
     
     try:
-        for file in temp_img_files + json_files + hocr_files:
+        for file in temp_img_files + json_files:
             if os.path.exists(file):
                 os.remove(file)
         shutil.rmtree(output_dir, ignore_errors=True)
