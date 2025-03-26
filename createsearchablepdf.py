@@ -96,7 +96,7 @@ def pdf_to_searchable(pdf_path, output_pdf):
             y_max = max(p[1] for p in points)
             pdf_x = x_min
             pdf_y = height - y_max
-            font_size = min(max(y_max - y_min, 6), 32)  # さらに20%小さく調整
+            font_size = min(max(y_max - y_min, 6), 32) 
             draw_invisible_text(c, content, pdf_x, pdf_y, font_size)
         c.showPage()
     c.save()
@@ -121,4 +121,3 @@ if __name__ == "__main__":
         pdf_to_searchable(input_pdf, output_pdf)
     except Exception as e:
         print(f"Error: {e}")
-
