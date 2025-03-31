@@ -96,7 +96,7 @@ def pdf_to_searchable(pdf_path, output_pdf):
             y_max = max(p[1] for p in points)
             pdf_x = x_min
             pdf_y = height - y_max
-            font_size = min(max(y_max - y_min, 6), 32) 
+            font_size = min(max(y_max - y_min, 4), 20) 
             draw_invisible_text(c, content, pdf_x, pdf_y, font_size)
         c.showPage()
     c.save()
